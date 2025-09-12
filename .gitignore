@@ -1,2 +1,6 @@
+# Node.js dependencies and logs
+node_modules/
+npm-debug.log*
 # Ignore environment variable files
 .env
+

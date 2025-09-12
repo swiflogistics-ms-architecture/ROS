@@ -113,3 +113,34 @@ Or use Postman to send a POST request with the same JSON body.
   ]
 }
 ```
+
+---
+
+### Using the JavaScript Adapter
+
+You can interact with the Flask API from a Node.js or JavaScript project using an adapter function. This adapter sends a POST request to the `/optimize` endpoint and returns the optimized routes.
+
+**How it works:**
+
+1. The adapter function (e.g., `optimizeRoutes`) takes the source address, destination addresses, and vehicles as arguments.
+2. It sends these as a JSON POST request to the Flask server's `/optimize` endpoint using `axios`.
+3. The Flask server processes the request and returns the optimized routes.
+4. The adapter receives the response and returns it to your JavaScript code for further use.
+
+**Example usage:**
+
+```js
+const { optimizeRoutes } = require("./rosAdapter");
+
+// srcAddress, addresses, vehicles
+optimizeRoutes(
+  "1600 Amphitheatre Parkway, Mountain View, CA", // srcAddress
+  [
+    "1 Infinite Loop, Cupertino, CA", // address
+    "500 Terry A Francois Blvd, San Francisco, CA", // address
+  ], // addresses
+  ["Truck 1", "Truck 2"] // vehicles
+).then((data) => console.log(JSON.stringify(data, null, 2)));
+```
+
+This will print the optimized routes to your console. Make sure your Flask server is running before calling the adapter.
