@@ -10,7 +10,7 @@ Accepts:
 
 Returns:
 
-- `routes`: For each vehicle, returns a list of route objects. Each route object contains the shortest path (coordinates), distance, and duration for a destination address.
+- `routes`: For each vehicle, returns a sequenced route covering all addresses, starting from the source address and visiting each destination in the nearest-neighbor order.
 
 ---
 
@@ -66,48 +66,16 @@ Or use Postman to send a POST request with the same JSON body.
   "routes": [
     {
       "vehicle": "Truck 1",
-      "routes": [
-        {
-          "coordinates": [
-            [37.4224764, -122.0842499],
-            [37.33182, -122.03118],
-            [37.770715, -122.38718]
-          ],
-          "distance": "9.4 mi",
-          "duration": "13 mins"
-        },
-        {
-          "coordinates": [
-            [37.4224764, -122.0842499],
-            [37.33182, -122.03118],
-            [37.770715, -122.38718]
-          ],
-          "distance": "45.2 mi",
-          "duration": "1 hr 2 mins"
-        }
+      "route": [
+        "1600 Amphitheatre Parkway, Mountain View, CA",
+        "1 Infinite Loop, Cupertino, CA"
       ]
     },
     {
       "vehicle": "Truck 2",
-      "routes": [
-        {
-          "coordinates": [
-            [37.4224764, -122.0842499],
-            [37.33182, -122.03118],
-            [37.770715, -122.38718]
-          ],
-          "distance": "9.4 mi",
-          "duration": "13 mins"
-        },
-        {
-          "coordinates": [
-            [37.4224764, -122.0842499],
-            [37.33182, -122.03118],
-            [37.770715, -122.38718]
-          ],
-          "distance": "45.2 mi",
-          "duration": "1 hr 2 mins"
-        }
+      "route": [
+        "1600 Amphitheatre Parkway, Mountain View, CA",
+        "500 Terry A Francois Blvd, San Francisco, CA"
       ]
     }
   ]

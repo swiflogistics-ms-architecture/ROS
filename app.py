@@ -9,31 +9,30 @@ app = Flask(__name__)
 load_dotenv()
 GoogleMapsAPIKey = os.getenv("GOOGLE_MAPS_API_KEY")
 
-    
-def get_shortest_path(api_key, origin, destination):
-    url = "https://maps.googleapis.com/maps/api/directions/json"
+def get_next_nearest_address(api_key, origin, destinations):
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
     params = {
-        "origin": origin,
-        "destination": destination,
+        "origins": origin,
+        "destinations": "|".join(destinations),
         "key": api_key
     }
     response = requests.get(url, params=params)
     data = response.json()
     if data["status"] == "OK":
-        route = data["routes"][0]["legs"][0]
-        distance = route["distance"]["text"]
-        duration = route["duration"]["text"]
-        
-        polyline_str = route["steps"][0]["polyline"]["points"]
-        coordinates = polyline.decode(polyline_str)
-        return {
-            "distance": distance,
-            "duration": duration,
-            "coordinates": coordinates
-        }
+        distances = data["rows"][0]["elements"]
+        min_distance = float('inf')
+        nearest_address = None
+        for i, element in enumerate(distances):
+            if element["status"] == "OK":
+                distance_value = element["distance"]["value"]
+                if distance_value < min_distance:
+                    min_distance = distance_value
+                    nearest_address = destinations[i]
+        return nearest_address
     else:
-        return {"error": data["status"]
-}
+        return None
+    
+
 
 @app.route('/optimize', methods=['POST'])
 def optimize():
@@ -41,26 +40,36 @@ def optimize():
     srcAddress = data.get('srcAddress', '')
     addresses = data.get('addresses', [])
     vehicles = data.get('vehicles', [])
-    optimized_routes = []
-    for address in addresses:
-        optimized_route = get_shortest_path(GoogleMapsAPIKey, srcAddress, address)
-        optimized_routes.append(optimized_route)
 
-    # Assign routes to vehicles (grouped per vehicle)
-    from collections import defaultdict
-    assignedRoutes = defaultdict(list)
+    # Split addresses evenly among vehicles
+    from math import ceil
     num_vehicles = len(vehicles)
-    for i, optimized_route in enumerate(optimized_routes):
-        if num_vehicles > 0:
-            vehicle = vehicles[i % num_vehicles]
-            assignedRoutes[vehicle].append(optimized_route)
-        else:
-            # No vehicles available
-            assignedRoutes["All vehicles are currently occupied"].append(optimized_route)
+    result = []
+    if num_vehicles == 0:
+        return jsonify({"routes": [{"vehicle": "Unassigned", "route": addresses}]})
 
-    # Format result as list of dicts
-    result = [{"vehicle": v, "routes": r} for v, r in assignedRoutes.items()]
+    chunk_size = ceil(len(addresses) / num_vehicles)
+    for i, vehicle in enumerate(vehicles):
+        # Get the chunk of addresses for this vehicle
+        start = i * chunk_size
+        end = start + chunk_size
+        vehicle_addresses = addresses[start:end]
+        route = [srcAddress]
+        current_location = srcAddress
+        remaining = vehicle_addresses.copy()
+        while remaining:
+            next_address = get_next_nearest_address(GoogleMapsAPIKey, current_location, remaining)
+            if next_address:
+                route.append(next_address)
+                remaining.remove(next_address)
+                current_location = next_address
+            else:
+                break
+        if len(route) > 1:
+            result.append({"vehicle": vehicle, "route": route})
+
     return jsonify({"routes": result})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
